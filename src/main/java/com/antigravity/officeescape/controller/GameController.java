@@ -44,7 +44,9 @@ public class GameController {
         room.addPlayer(player);
 
         // Respond to specific client topic
-        Map<String, Object> response = Map.of("type", "ROOM_CREATED", "room", room);
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("type", "ROOM_CREATED");
+        response.put("room", room);
         messagingTemplate.convertAndSend("/topic/private/" + clientId, response);
 
         broadcastLobbyState();
