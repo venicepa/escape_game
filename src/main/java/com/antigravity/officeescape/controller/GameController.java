@@ -86,6 +86,27 @@ public class GameController {
         String sessionId = headerAccessor.getSessionId();
         Room room = roomManager.findRoomByPlayerSession(sessionId);
         if (room != null && room.getGameState() == GameState.LOBBY) {
+            // Initialize Game
+            room.setScrollOffset(0);
+            room.setGameSpeed(3.0); // Reset speed
+
+            // 1. Create Starting Platform (Wide and Safe)
+            room.getStairs().clear();
+            // Center is 400. Let's make a 400px wide stair at x=200..600, y=300
+            room.getStairs().add(new com.antigravity.officeescape.model.Stair(200, 300, 400,
+                    com.antigravity.officeescape.model.StairType.NORMAL));
+
+            // 2. Position Players
+            for (Player p : room.getPlayers().values()) {
+                p.setX(400); // Center
+                p.setY(250); // Slightly above platform
+                p.setVx(0);
+                p.setVy(0);
+                p.setHp(10);
+                p.setDead(false);
+                p.setFloor(0);
+            }
+
             room.setGameState(GameState.PLAYING);
             messagingTemplate.convertAndSend("/topic/room/" + room.getRoomId(), room);
         }
