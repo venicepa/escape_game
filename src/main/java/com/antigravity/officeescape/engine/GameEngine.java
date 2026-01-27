@@ -24,14 +24,14 @@ public class GameEngine {
     private final LeaderboardRepository leaderboardRepository;
 
     // Physics constants
-    private static final double GRAVITY = 0.5;
-    private static final double MOVE_SPEED = 5.0;
+    private static final double GRAVITY = 0.8;
+    private static final double MOVE_SPEED = 12.0;
     private static final double JUMP_FORCE = -8.0; // Bouncing? Use small negative if needed, otherwise 0
     private static final double PLAYER_WIDTH = 30;
     private static final double PLAYER_HEIGHT = 30;
     private static final int GAME_WIDTH = 800;
     private static final int GAME_HEIGHT = 600;
-    private static final double SCROLL_SPEED_BASE = 3.0; // Faster start
+    private static final double SCROLL_SPEED_BASE = 5.0; // Faster start
     private static final double ACCELERATION = 0.005; // Faster buildup
     private static final double MAX_SPEED = 15.0;
 

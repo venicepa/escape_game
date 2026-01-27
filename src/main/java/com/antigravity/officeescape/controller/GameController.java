@@ -100,12 +100,12 @@ public class GameController {
         if (room != null && room.getGameState() == GameState.LOBBY) {
             // Initialize Game
             room.setScrollOffset(0);
-            room.setGameSpeed(3.0); // Reset speed
+            room.setGameSpeed(5.0); // Reset speed
 
-            // 1. Create Starting Platform (Wide and Safe)
+            // 1. Create Starting Platform (Smaller and Safe)
             room.getStairs().clear();
-            // Center is 400. Let's make a 400px wide stair at x=200..600, y=300
-            room.getStairs().add(new com.antigravity.officeescape.model.Stair(200, 300, 400,
+            // Center is 400. Let's make a 200px wide stair at x=300..500, y=300
+            room.getStairs().add(new com.antigravity.officeescape.model.Stair(300, 300, 200,
                     com.antigravity.officeescape.model.StairType.NORMAL));
 
             // 2. Position Players
