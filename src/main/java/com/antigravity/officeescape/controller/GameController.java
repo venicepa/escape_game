@@ -6,12 +6,17 @@ import com.antigravity.officeescape.model.Room;
 import com.antigravity.officeescape.service.RoomManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.antigravity.officeescape.model.Leaderboard;
+import com.antigravity.officeescape.repository.LeaderboardRepository;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -21,6 +26,13 @@ public class GameController {
 
     private final RoomManager roomManager;
     private final SimpMessagingTemplate messagingTemplate;
+    private final LeaderboardRepository leaderboardRepository;
+
+    @GetMapping("/api/leaderboard")
+    @ResponseBody
+    public List<Leaderboard> getLeaderboard() {
+        return leaderboardRepository.findTop10ByOrderByScoreDesc();
+    }
 
     @org.springframework.messaging.simp.annotation.SubscribeMapping("/lobby")
     public java.util.Collection<Room> subscribeLobby() {

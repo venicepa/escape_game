@@ -418,4 +418,40 @@ function render() {
 requestAnimationFrame(render);
 
 // Connect immediately
-connect();
+// Connect immediately
+connect(() => {
+    fetchLeaderboard();
+});
+
+function fetchLeaderboard() {
+    fetch('/api/leaderboard')
+        .then(response => response.json())
+        .then(data => {
+            const list = document.getElementById('leaderboard-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            if (data.length === 0) {
+                list.innerHTML = '<li style="color: #888; justify-content: center;">No records yet</li>';
+                return;
+            }
+
+            data.forEach((entry, index) => {
+                const li = document.createElement('li');
+                li.style.padding = '10px';
+                li.style.background = 'rgba(255,255,255,0.05)';
+                li.style.marginBottom = '5px';
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+
+                let rankEmoji = '👏';
+                if (index === 0) rankEmoji = '🥇';
+                if (index === 1) rankEmoji = '🥈';
+                if (index === 2) rankEmoji = '🥉';
+
+                li.innerHTML = `<span>${rankEmoji} ${entry.playerName}</span> <span style="color: #f1c40f; font-weight: bold;">${entry.score}F</span>`;
+                list.appendChild(li);
+            });
+        })
+        .catch(err => console.error("Failed to fetch leaderboard", err));
+}
