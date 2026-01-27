@@ -116,44 +116,52 @@ public class GameEngine {
         if (player.getVy() < 0)
             return;
 
+        double playerBottom = player.getY() + PLAYER_HEIGHT;
+        // Previous frame Y (approximate since we just updated it)
+        double prevBottom = playerBottom - player.getVy();
+
         for (Stair stair : room.getStairs()) {
-            // Check intersection logic (AABB)
+            double stairY = stair.getY();
+
+            // Check horizontal overlap
             boolean overlapX = player.getX() < stair.getX() + stair.getWidth() &&
                     player.getX() + PLAYER_WIDTH > stair.getX();
-            boolean overlapY = player.getY() + PLAYER_HEIGHT >= stair.getY() &&
-                    player.getY() + PLAYER_HEIGHT <= stair.getY() + 15; // Tolerance
 
-            if (overlapX && overlapY) {
+            if (!overlapX)
+                continue;
+
+            // Check vertical intersection (Raycast / Tunneling prevention)
+            // 1. Standard overlap (in case velocity is small)
+            boolean overlapY = playerBottom >= stairY && playerBottom <= stairY + 15;
+
+            // 2. Crossed logic (in case velocity is large)
+            // If we were above (or slightly inside) previously, and now we are below (or
+            // inside).
+            // strictly: prevBottom <= stairY and playerBottom >= stairY
+            // relaxed: prevBottom <= stairY + 10 (to forgive slight penetrations)
+            boolean crossed = prevBottom <= stairY + 5 && playerBottom >= stairY;
+
+            if (overlapY || crossed) {
                 // Landed
-                player.setY(stair.getY() - PLAYER_HEIGHT);
+                player.setY(stairY - PLAYER_HEIGHT);
                 player.setVy(0); // Stop falling
 
                 // Handle Stair Types
                 if (stair.getType() == StairType.SPIKE) {
                     player.setHp(player.getHp() - 3);
-                    // Bounce up slightly?
-                    player.setVy(-3);
+                    player.setVy(-3); // Bounce
                 } else if (stair.getType() == StairType.CONVEYOR_LEFT) {
                     player.setX(player.getX() - 2);
                 } else if (stair.getType() == StairType.CONVEYOR_RIGHT) {
                     player.setX(player.getX() + 2);
+                } else if (stair.getType() == StairType.NORMAL) {
+                    if (player.getHp() < 10 && Math.random() < 0.05) {
+                        player.setHp(player.getHp() + 1); // Rare heal
+                    }
                 }
 
-                // Normal regenerates HP?
-                if (stair.getType() == StairType.NORMAL) {
-                    // maybe heal?
-                }
-
-                // "Go down stairs" logic? Actually usually you keep falling till you hit a
-                // stair.
-                // If you are on a stair, you move up with it (since stairs are static in world
-                // Y? No, stairs scroll UP usually)
-                // Wait. In my scroll logic: `room.setScrollOffset + speed`.
-                // If stairs track absolute Y, then relative Y = stairY - scrollOffset.
-                // If I send "absolute Y" to client, client subtracts scrollOffset to render.
-                // Physics should work in Absolute Y.
-                // But stairs are "generated". Infinite scrolling.
-                // So yes, everything absolute.
+                // Stop checking other stairs if we landed
+                return;
             }
         }
     }
