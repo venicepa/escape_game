@@ -436,7 +436,7 @@ function fetchLeaderboard() {
                 return;
             }
 
-            data.forEach((entry, index) => {
+            data.slice(0, 3).forEach((entry, index) => {
                 const li = document.createElement('li');
                 li.style.padding = '10px';
                 li.style.background = 'rgba(255,255,255,0.05)';

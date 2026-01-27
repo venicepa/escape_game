@@ -188,35 +188,46 @@
         <div id="lobby-screen" class="screen">
             <h1>Office Escape</h1>
             <p style="color:#aaa; margin-bottom: 20px;">The Floor is Rising... Falling?</p>
-            <input type="text" id="username" placeholder="Your Name" autocomplete="off" />
 
-            <div class="controls">
-                <button onclick="createRoom()">Create Room</button>
-                <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                    <input type="text" id="room-code" placeholder="Room Code"
-                        style="width: 150px; margin-bottom: 10px;" />
-                    <br>
-                    <button onclick="joinRoom()"
-                        style="background: linear-gradient(135deg, #0f3460, #16213e); box-shadow: 0 4px 15px rgba(15, 52, 96, 0.4);">Join
-                        Room</button>
+            <div class="lobby-columns" style="display: flex; gap: 40px; align-items: flex-start;">
+                <!-- Left Column: Game Controls -->
+                <div class="lobby-left"
+                    style="display: flex; flex-direction: column; align-items: center; width: 300px;">
+                    <input type="text" id="username" placeholder="Your Name" autocomplete="off"
+                        style="width: 100%; box-sizing: border-box;" />
+
+                    <div class="controls" style="width: 100%;">
+                        <button onclick="createRoom()" style="width: 100%; margin: 10px 0;">Create Room</button>
+                        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                            <input type="text" id="room-code" placeholder="Room Code"
+                                style="width: 100%; margin-bottom: 10px; box-sizing: border-box;" />
+                            <br>
+                            <button onclick="joinRoom()"
+                                style="background: linear-gradient(135deg, #0f3460, #16213e); box-shadow: 0 4px 15px rgba(15, 52, 96, 0.4); width: 100%; margin: 0;">Join
+                                Room</button>
+                        </div>
+
+                        <div id="active-rooms" style="margin-top: 30px; width: 100%;">
+                            <h3
+                                style="font-size: 1.2rem; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px;">
+                                Active Rooms</h3>
+                            <ul id="room-list-ui" style="max-height: 200px; overflow-y: auto;">
+                                <li style="color: #666; justify-content: center;">Connecting to lobby...</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="active-rooms" style="margin-top: 30px; width: 100%; max-width: 400px;">
-                    <h3
-                        style="font-size: 1.2rem; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px;">
-                        Active Rooms</h3>
-                    <ul id="room-list-ui" style="max-height: 200px; overflow-y: auto;">
-                        <li style="color: #666; justify-content: center;">Connecting to lobby...</li>
-                    </ul>
-                </div>
-
-                <div id="leaderboard-section" style="margin-top: 20px; width: 100%; max-width: 400px;">
-                    <h3
-                        style="font-size: 1.2rem; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; color: #f1c40f;">
-                        🏆 Leaderboard</h3>
-                    <ul id="leaderboard-list" style="max-height: 150px; overflow-y: auto;">
-                        <li style="color: #666; justify-content: center;">Loading...</li>
-                    </ul>
+                <!-- Right Column: Leaderboard -->
+                <div class="lobby-right" style="width: 250px;">
+                    <div id="leaderboard-section" style="width: 100%;">
+                        <h3
+                            style="font-size: 1.2rem; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; color: #f1c40f;">
+                            🏆 Top 3</h3>
+                        <ul id="leaderboard-list" style="max-height: 300px; overflow-y: auto;">
+                            <li style="color: #666; justify-content: center;">Loading...</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
