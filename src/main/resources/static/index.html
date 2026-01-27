@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Escape: The Downfall</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Roboto:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --primary-color: #e94560;
+            --secondary-color: #16213e;
+            --accent-color: #0f3460;
+            --text-color: #eaeaea;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: var(--text-color);
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #app {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Fredoka One', cursive;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+
+        canvas {
+            background-color: #111;
+            border: 4px solid var(--secondary-color);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+        }
+
+        .screen {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.5s ease-out;
+            min-width: 300px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        input {
+            padding: 15px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            border: 2px solid var(--accent-color);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            outline: none;
+            width: 250px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--primary-color), #c0394d);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            font-family: 'Fredoka One', cursive;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.6);
+            background: linear-gradient(135deg, #ff5e78, #d64056);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        li {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 10px 0;
+            border-radius: 10px;
+            font-family: 'Fredoka One', cursive;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li.ready {
+            border-left: 5px solid #2ecc71;
+        }
+
+        li.not-ready {
+            border-left: 5px solid #f1c40f;
+        }
+
+        .game-hud {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+
+        .hud-item {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+
+<body>
+
+    <div id="app">
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen">
+            <h1>Office Escape</h1>
+            <p style="color:#aaa; margin-bottom: 20px;">The Floor is Rising... Falling?</p>
+            <input type="text" id="username" placeholder="Your Name" autocomplete="off" />
+
+            <div class="controls">
+                <button onclick="createRoom()">Create Room</button>
+                <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                    <input type="text" id="room-code" placeholder="Room Code"
+                        style="width: 150px; margin-bottom: 10px;" />
+                    <br>
+                    <button onclick="joinRoom()"
+                        style="background: linear-gradient(135deg, #0f3460, #16213e); box-shadow: 0 4px 15px rgba(15, 52, 96, 0.4);">Join
+                        Room</button>
+                </div>
+
+                <div id="active-rooms" style="margin-top: 30px; width: 100%; max-width: 400px;">
+                    <h3
+                        style="font-size: 1.2rem; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px;">
+                        Active Rooms</h3>
+                    <ul id="room-list-ui" style="max-height: 200px; overflow-y: auto;">
+                        <li style="color: #666; justify-content: center;">Connecting to lobby...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Screen -->
+        <div id="room-screen" class="screen hidden">
+            <h2 id="room-id-display">Room: ????</h2>
+            <h3>Survivors</h3>
+            <ul id="player-list"></ul>
+            <div style="display: flex; gap: 10px;">
+                <button id="ready-btn" onclick="toggleReady()"
+                    style="background: linear-gradient(135deg, #f1c40f, #f39c12);">Ready?</button>
+                <button id="start-btn" onclick="startGame()" class="hidden"
+                    style="background: linear-gradient(135deg, #2ecc71, #27ae60);">START</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden" style="position: relative;">
+            <div class="game-hud">
+                <div class="hud-item" style="color: #ff5e78;"><span id="health-display">HP: 10</span></div>
+                <div class="hud-item" style="color: #4cd137;"><span id="floor-display">B1</span></div>
+            </div>
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="screen hidden">
+            <h1>GAME OVER</h1>
+            <h3 style="margin-top:0;">Leaderboard</h3>
+            <div id="final-stats" style="width: 100%;"></div>
+            <button onclick="location.reload()" style="margin-top: 20px;">Play Again</button>
+        </div>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+
+</html>
