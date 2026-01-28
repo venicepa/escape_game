@@ -66,18 +66,18 @@ public class GameEngine {
 
             updatePlayerPhysics(player, room);
             checkCollisions(player, room);
+            checkItemCollisions(player, room);
             checkBoundaries(player, room);
 
-            // Check Score (Floor count) - Simplified: Score based on survival time or
-            // passing stairs?
-            // Prompt says "score (樓層數)". We need to track floors passed.
-            // Let's approximate: floor = scrollOffset / 100 or something.
-            // Or increment when passing a stair Y threshold.
+            // Check Score
             int currentFloor = (int) (room.getScrollOffset() / 100);
             if (currentFloor > player.getFloor()) {
                 player.setFloor(currentFloor);
             }
         }
+
+        // Cleanup Items
+        room.getItems().removeIf(item -> item.getY() < room.getScrollOffset() - 50);
 
         // 4. Broadcast State
         messagingTemplate.convertAndSend("/topic/room/" + room.getRoomId(), room);
@@ -89,6 +89,13 @@ public class GameEngine {
     }
 
     private void updatePlayerPhysics(Player player, Room room) {
+        // Check effect expiration
+        if (player.getEffectEndTime() > 0 && System.currentTimeMillis() > player.getEffectEndTime()) {
+            player.setWidth(PLAYER_WIDTH);
+            player.setHeight(PLAYER_HEIGHT);
+            player.setEffectEndTime(0);
+        }
+
         // Horizontal Movement
         if (player.isMovingLeft()) {
             player.setVx(-MOVE_SPEED);
@@ -103,8 +110,8 @@ public class GameEngine {
         // Wall collision
         if (player.getX() < 0)
             player.setX(0);
-        if (player.getX() + PLAYER_WIDTH > GAME_WIDTH)
-            player.setX(GAME_WIDTH - PLAYER_WIDTH);
+        if (player.getX() + player.getWidth() > GAME_WIDTH)
+            player.setX(GAME_WIDTH - player.getWidth());
 
         // Gravity
         player.setVy(player.getVy() + GRAVITY);
@@ -116,7 +123,7 @@ public class GameEngine {
         if (player.getVy() < 0)
             return;
 
-        double playerBottom = player.getY() + PLAYER_HEIGHT;
+        double playerBottom = player.getY() + player.getHeight();
         // Previous frame Y (approximate since we just updated it)
         double prevBottom = playerBottom - player.getVy();
 
@@ -125,7 +132,7 @@ public class GameEngine {
 
             // Check horizontal overlap
             boolean overlapX = player.getX() < stair.getX() + stair.getWidth() &&
-                    player.getX() + PLAYER_WIDTH > stair.getX();
+                    player.getX() + player.getWidth() > stair.getX();
 
             if (!overlapX)
                 continue;
@@ -135,15 +142,11 @@ public class GameEngine {
             boolean overlapY = playerBottom >= stairY && playerBottom <= stairY + 15;
 
             // 2. Crossed logic (in case velocity is large)
-            // If we were above (or slightly inside) previously, and now we are below (or
-            // inside).
-            // strictly: prevBottom <= stairY and playerBottom >= stairY
-            // relaxed: prevBottom <= stairY + 10 (to forgive slight penetrations)
             boolean crossed = prevBottom <= stairY + 5 && playerBottom >= stairY;
 
             if (overlapY || crossed) {
                 // Landed
-                player.setY(stairY - PLAYER_HEIGHT);
+                player.setY(stairY - player.getHeight());
                 player.setVy(0); // Stop falling
 
                 // Handle Stair Types
@@ -162,6 +165,28 @@ public class GameEngine {
 
                 // Stop checking other stairs if we landed
                 return;
+            }
+        }
+    }
+
+    private void checkItemCollisions(Player player, Room room) {
+        Iterator<Item> iterator = room.getItems().iterator();
+        while (iterator.hasNext()) {
+            Item item = iterator.next();
+
+            // Simple AABB Collision
+            boolean collision = player.getX() < item.getX() + item.getWidth() &&
+                    player.getX() + player.getWidth() > item.getX() &&
+                    player.getY() < item.getY() + item.getHeight() &&
+                    player.getY() + player.getHeight() > item.getY();
+
+            if (collision) {
+                if (item.getType() == ItemType.GROWTH_POTION) {
+                    player.setWidth(PLAYER_WIDTH * 2);
+                    player.setHeight(PLAYER_HEIGHT * 2);
+                    player.setEffectEndTime(System.currentTimeMillis() + 5000); // 5 seconds
+                }
+                iterator.remove();
             }
         }
     }
@@ -208,6 +233,17 @@ public class GameEngine {
                 type = StairType.CONVEYOR_RIGHT;
 
             stairs.add(new Stair(x, lastY, width, type));
+
+            // Random Item Generation (10% chance)
+            if (type == StairType.NORMAL && Math.random() < 0.1) {
+                Item item = new Item(
+                        java.util.UUID.randomUUID().toString(),
+                        x + width / 2 - 15, // Center on stair
+                        lastY - 30, // Above stair
+                        30, 30,
+                        ItemType.GROWTH_POTION);
+                room.getItems().add(item);
+            }
         }
 
         // Cleanup old stairs (above top)

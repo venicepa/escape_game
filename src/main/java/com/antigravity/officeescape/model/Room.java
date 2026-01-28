@@ -12,6 +12,7 @@ public class Room {
     // Map sessionId -> Player
     private ConcurrentHashMap<String, Player> players = new ConcurrentHashMap<>();
     private List<Stair> stairs = new ArrayList<>();
+    private List<Item> items = new ArrayList<>();
     private GameState gameState = GameState.LOBBY;
 
     // For loop control, transient to avoid serialization issues if we send Room

@@ -19,6 +19,7 @@ const PLAYER_HEIGHT = 30;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById('game-screen').classList.add('hidden');
     document.getElementById(screenId).classList.remove('hidden');
 
     if (screenId === 'game-screen') {
@@ -295,7 +296,8 @@ function drawPlayer(x, y, player) {
     ctx.save();
 
     const isMe = player.name === playerName;
-    const radius = PLAYER_WIDTH / 2;
+    const width = player.width || PLAYER_WIDTH;
+    const radius = width / 2;
     const centerX = x + radius;
     const centerY = y + radius;
 
@@ -314,38 +316,83 @@ function drawPlayer(x, y, player) {
     ctx.fillStyle = '#000';
 
     const time = Date.now();
-    const eyeY = centerY - 5;
-    let eyeH = 4;
+    const eyeY = centerY - (radius * 0.3); // Adjust eye height based on size
+    let eyeH = radius * 0.25;
     if (Math.floor(time / 2000) % 2 === 0 && Math.floor(time / 50) % 10 === 0) eyeH = 1;
 
     let lookOffset = 0;
-    if (player.movingLeft) lookOffset = -2;
-    if (player.movingRight) lookOffset = 2;
+    if (player.movingLeft) lookOffset = -(radius * 0.15);
+    if (player.movingRight) lookOffset = (radius * 0.15);
+
+    const eyeOffsetX = radius * 0.35;
 
     ctx.beginPath();
-    ctx.ellipse(centerX - 5 + lookOffset, eyeY, 2, eyeH, 0, 0, Math.PI * 2); // Left
+    ctx.ellipse(centerX - eyeOffsetX + lookOffset, eyeY, radius * 0.15, eyeH, 0, 0, Math.PI * 2); // Left
     ctx.fill();
 
     ctx.beginPath();
-    ctx.ellipse(centerX + 5 + lookOffset, eyeY, 2, eyeH, 0, 0, Math.PI * 2); // Right
+    ctx.ellipse(centerX + eyeOffsetX + lookOffset, eyeY, radius * 0.15, eyeH, 0, 0, Math.PI * 2); // Right
     ctx.fill();
 
     // Blush
     ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+    const blushY = centerY + (radius * 0.15);
+    const blushOffsetX = radius * 0.55;
     ctx.beginPath();
-    ctx.arc(centerX - 8 + lookOffset, centerY + 2, 3, 0, Math.PI * 2);
+    ctx.arc(centerX - blushOffsetX + lookOffset, blushY, radius * 0.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(centerX + 8 + lookOffset, centerY + 2, 3, 0, Math.PI * 2);
+    ctx.arc(centerX + blushOffsetX + lookOffset, blushY, radius * 0.2, 0, Math.PI * 2);
     ctx.fill();
 
     // Name Tag
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
-    ctx.font = 'bold 12px Roboto';
+    ctx.font = `bold ${Math.max(12, radius * 0.8)}px Roboto`;
     ctx.shadowColor = '#000';
     ctx.shadowBlur = 4;
     ctx.fillText(player.name, centerX, y - 10);
+
+    ctx.restore();
+}
+
+function drawItem(x, y, width, height, type) {
+    ctx.save();
+
+    // Draw Mushroom / Potion
+    if (type === 'GROWTH_POTION') {
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+
+        // Potion Bottle
+        ctx.fillStyle = '#e74c3c'; // Red Potion
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+
+        // Glow
+        ctx.shadowColor = '#e74c3c';
+        ctx.shadowBlur = 10;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy + 5, 10, 0, Math.PI * 2); // Bulb
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.rect(cx - 3, cy - 10, 6, 10); // Neck
+        ctx.fill();
+        ctx.stroke();
+
+        // Cork
+        ctx.fillStyle = '#d35400';
+        ctx.fillRect(cx - 4, cy - 12, 8, 3);
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.arc(cx - 3, cy + 3, 3, 0, Math.PI * 2); // Shine
+        ctx.fill();
+    }
 
     ctx.restore();
 }
@@ -393,6 +440,15 @@ function render() {
                 drawStair(stair.x, drawY, stair.width, stair.type);
             }
         });
+
+        if (gameState.items) {
+            gameState.items.forEach(item => {
+                const drawY = item.y - scrollOffset;
+                if (drawY > -50 && drawY < GAME_HEIGHT + 50) {
+                    drawItem(item.x, drawY, item.width, item.height, item.type);
+                }
+            });
+        }
 
         Object.values(gameState.players).forEach(p => {
             if (p.dead) return;
@@ -454,4 +510,18 @@ function fetchLeaderboard() {
             });
         })
         .catch(err => console.error("Failed to fetch leaderboard", err));
+}
+
+function backToLobby() {
+    roomId = null;
+    isReady = false;
+    gameState = null;
+    // playerName and input value are preserved in DOM/variable
+
+    showScreen('lobby-screen');
+
+    // Reconnect to receive lobby updates (active rooms)
+    connect(() => {
+        fetchLeaderboard();
+    });
 }

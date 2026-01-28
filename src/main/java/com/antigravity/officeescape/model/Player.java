@@ -21,6 +21,10 @@ public class Player {
     private boolean movingLeft;
     private boolean movingRight;
 
+    private double width;
+    private double height;
+    private long effectEndTime;
+
     public Player(String sessionId, String name) {
         this.sessionId = sessionId;
         this.name = name;
@@ -30,5 +34,7 @@ public class Player {
         this.isDead = false;
         this.x = 200; // Default spawn
         this.y = 100;
+        this.width = 30;
+        this.height = 30;
     }
 }
